@@ -4,16 +4,7 @@ import { Gender, Prisma } from '@prisma/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 import React, { useRef } from 'react';
 import { Label } from './ui/label';
-import {
-	Github,
-	Mail,
-	Twitter,
-	Facebook,
-	Instagram,
-	Edit,
-	Save,
-	X,
-} from 'lucide-react';
+import { Save } from 'lucide-react';
 import {
 	Card,
 	CardContent,
@@ -24,14 +15,7 @@ import {
 } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-
-const icons = {
-	github: Github,
-	mail: Mail,
-	twitter: Twitter,
-	facebook: Facebook,
-	instagram: Instagram,
-};
+import { EdgeStoreProvider, useEdgeStore } from '../lib/edgestore';
 import Form from 'next/form';
 import { useFormStatus } from 'react-dom';
 import prisma from '@/lib/db';
@@ -48,14 +32,17 @@ import updateUser from '@/lib/updateUser';
 import { toast } from '@/hooks/use-toast';
 import { ToastAction, ToastClose } from './ui/toast';
 import { Toaster } from './ui/toaster';
+import { SingleImageDropzone } from '@/components/UploadImage';
+import { set } from 'zod';
 
 const ProfileCard = ({
 	user,
 	isUser,
 }: {
-	user: Prisma.UserCreateInput;
+	user: Prisma.UserCreateInput | null;
 	isUser: boolean;
 }) => {
+	if (!user) return null;
 	const [edited, setEdited] = React.useState(false);
 	const formPending = useFormStatus().pending;
 	const [usernameInput, setUsernameInput] = React.useState(user.username);
@@ -67,69 +54,108 @@ const ProfileCard = ({
 		user.gender?.toString() || 'N/A'
 	);
 	const [bioInput, setBioInput] = React.useState(user.bio ?? 'N/A');
+	const [imageInput, setImageInput] = React.useState(
+		user.image ?? 'https://github.com/shadcn.png'
+	);
+	const [file, setFile] = React.useState<File | string>(imageInput);
+	const originalImage = useRef(imageInput);
+	const { edgestore } = useEdgeStore();
+	const [undo, setUndo] = React.useState(false);
+	const [saving, setSaving] = React.useState(false);
 
 	return (
 		<form
 			onSubmit={async (event) => {
 				event.preventDefault();
+				setEdited(false);
+				setSaving(true);
 				const id = user.id;
 				const updateAge = parseInt(ageInput) ?? null;
 				const updateGender =
 					Object.values(Gender).find(
 						(gender) => formatGenderFunction(gender) === genderInput
 					) ?? null;
-				const res = await updateUser({
+				let newImage = originalImage.current;
+				if (file !== originalImage.current) {
+					if (file instanceof File) {
+						const res = await edgestore.publicFiles.upload({
+							file,
+							onProgressChange: (progress: any) => {
+								// you can use this to show a progress bar
+							},
+						});
+						// you can run some server action or api here
+						// to add the necessary data to your database
+						newImage = res.url;
+					} else {
+						newImage = file;
+					}
+				}
+				const updatedUser = await updateUser({
 					id,
 					usernameInput,
 					slugInput,
 					updateAge,
 					updateGender,
 					bioInput,
+					imageInput: newImage,
 				});
-				setEdited(false);
 				toast({
 					title: 'Profile Updated Successfully!',
-					action: (
-						<ToastClose>
-							<span>Dismiss</span>
-						</ToastClose>
-					),
+					description:
+						"We'll refresh the page for you to apply changes.",
+					action: <ToastClose></ToastClose>,
 				});
+				setTimeout(() => {
+					setSaving(false);
+					window.location.reload();
+				}, 1500);
 			}}
 		>
 			<Card className='flex flex-col gap-4 m-2 pb-3 rounded-lg h-fit'>
-				<CardContent className='grid grid-cols-10 gap-4 p-3'>
-					<Avatar
-						id='avatar'
-						className='col-span-3'
+				<CardContent className='flex flex-col gap-4 p-3 justify-center items-center'>
+					<SingleImageDropzone
+						width={200}
+						height={200}
+						value={file}
+						disabled={!isUser}
+						onChange={(file: any) => {
+							setFile(file);
+							if (file) {
+								setEdited(true);
+								setUndo(true);
+							}
+						}}
+					/>
+					<Button
+						className={`${!undo && file && 'hidden'}`}
+						type='button'
+						onClick={() => {
+							setFile(originalImage.current);
+							setUndo(false);
+						}}
 					>
-						<AvatarImage
-							src={user.image || 'https://github.com/shadcn.png'}
-							className='border-2 border-black shadow-lg rounded-full'
-						/>
-						<AvatarFallback>{user.username[0]}</AvatarFallback>
-					</Avatar>
-					<CardContent className='flex flex-col col-span-7 p-0 pt-3 gap-3'>
-						<ProfileSpan
-							isUser={isUser}
-							edited={edited}
-							setEdited={setEdited}
-							label='username'
-							input={usernameInput}
-							setInput={setUsernameInput}
-						/>
-						<ProfileSpan
-							isUser={isUser}
-							edited={edited}
-							setEdited={setEdited}
-							label='slug'
-							input={slugInput}
-							setInput={setSlugInput}
-						/>
-					</CardContent>
+						Undo
+					</Button>
 				</CardContent>
 				<ul className='flex flex-col gap-3 pl-7 pr-3'>
-					<div className='flex gap-3'>
+					<ProfileSpan
+						isUser={isUser}
+						edited={edited}
+						setEdited={setEdited}
+						label='username'
+						input={usernameInput}
+						setInput={setUsernameInput}
+					/>
+					<ProfileSpan
+						isUser={isUser}
+						edited={edited}
+						setEdited={setEdited}
+						label='slug'
+						input={slugInput}
+						setInput={setSlugInput}
+					/>
+					<div className='grid grid-cols-2 gap-3'>
 						<ProfileSpan
 							isUser={isUser}
 							edited={edited}
@@ -147,14 +173,6 @@ const ProfileCard = ({
 							setInput={setGenderInput}
 						></ProfileSpan>
 					</div>
-					<div className='flex flex-col gap-1'>
-						<Label
-							htmlFor='socialLinks'
-							className='italic capitalize opacity-70'
-						>
-							Social Links
-						</Label>
-					</div>
 					<ProfileSpan
 						isUser={isUser}
 						edited={edited}
@@ -165,12 +183,12 @@ const ProfileCard = ({
 					></ProfileSpan>
 				</ul>
 				{isUser && (
-					<CardFooter className='mt-5 pb-0'>
+					<CardFooter className='mt-5 pb-0 justify-center'>
 						<Button
-							disabled={!edited || formPending}
+							disabled={!edited || saving}
 							type='submit'
 						>
-							{formPending ? 'Saving...' : 'Save Changes'}
+							{saving ? 'Saving...' : 'Save Changes'}
 							<Save />
 						</Button>
 					</CardFooter>

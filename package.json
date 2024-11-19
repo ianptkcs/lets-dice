@@ -13,6 +13,8 @@
 		"migrate:postgres": "dotenv -e .env.sample -- npx prisma migrate deploy"
 	},
 	"dependencies": {
+		"@edgestore/react": "^0.2.2",
+		"@edgestore/server": "^0.2.2",
 		"@kinde-oss/kinde-auth-nextjs": "^2.4.6",
 		"@prisma/client": "^5.22.0",
 		"@radix-ui/react-avatar": "^1.1.1",
@@ -32,8 +34,10 @@
 		"next": "15.0.3",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
+		"react-dropzone": "^14.3.5",
 		"tailwind-merge": "^2.5.4",
-		"tailwindcss-animate": "^1.0.7"
+		"tailwindcss-animate": "^1.0.7",
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@types/node": "^20",

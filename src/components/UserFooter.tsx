@@ -50,7 +50,12 @@ const UserFooter = ({ user }: { user: Prisma.UserCreateInput | null }) => {
 				<Button asChild>
 					<div className='h-fit flex py-0 gap-3 justify-stretch hover:cursor-pointer'>
 						<Avatar className='border-2 border-white shadow-md'>
-							<AvatarImage src='https://github.com/shadcn.png' />
+							<AvatarImage
+								src={
+									user.image ??
+									'https://github.com/shadcn.png'
+								}
+							/>
 							<AvatarFallback>{user.username[0]}</AvatarFallback>
 						</Avatar>
 						<div className='flex flex-col items-start'>

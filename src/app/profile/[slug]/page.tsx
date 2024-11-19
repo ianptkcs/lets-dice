@@ -5,12 +5,13 @@ import isUser from '@/lib/isUser';
 import { notFound } from 'next/navigation';
 import React from 'react';
 
-const ProfilePage = async ({
-	params,
-}: {
-	params: Promise<{ slug: string }>;
-}) => {
-	const { slug } = await params;
+// Adicione esta linha para forçar a renderização dinâmica
+export const revalidate = 0;
+// ou
+// export const dynamic = 'force-dynamic';
+
+const ProfilePage = async ({ params }: { params: { slug: string } }) => {
+	const { slug } = params;
 	const user = await prisma.user.findUnique({
 		where: { slug },
 	});

@@ -5,6 +5,7 @@ import { AuthProvider } from '@/provider/AuthProvider';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/Sidebar';
 import { BreadcrumbWithCustomSeparator } from '@/components/Header';
+import { EdgeStoreProvider } from '@/lib/edgestore';
 
 const geistSans = localFont({
 	src: './fonts/GeistVF.woff',
@@ -34,10 +35,12 @@ export default function RootLayout({
 			>
 				<AuthProvider>
 					<SidebarProvider>
-						<AppSidebar />
-						<main className='w-full px-[5%] py-[2%]'>
-							{children}
-						</main>
+						<EdgeStoreProvider>
+							<AppSidebar />
+							<main className='w-full px-[5%] py-[2%]'>
+								{children}
+							</main>
+						</EdgeStoreProvider>
 					</SidebarProvider>
 				</AuthProvider>
 			</body>

@@ -10,6 +10,7 @@ const updateUser = async ({
 	updateAge,
 	updateGender,
 	bioInput,
+	imageInput,
 }: {
 	id: string | undefined;
 	usernameInput: string;
@@ -17,6 +18,7 @@ const updateUser = async ({
 	updateAge: number;
 	updateGender: Gender | null;
 	bioInput: string;
+	imageInput: string;
 }) => {
 	return await prisma.user.update({
 		where: {
@@ -28,6 +30,7 @@ const updateUser = async ({
 			age: updateAge,
 			gender: updateGender,
 			bio: bioInput,
+			image: imageInput,
 		},
 	});
 };
