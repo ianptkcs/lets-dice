@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  kindeID     String       @unique
+  username    String
+  slug        String       @unique
+  createdAt   DateTime?    @default(now())
+  age         Int?
+  gender      Gender?
+  bio         String?
+  image       String?
+  player      Player?
+  gameMaster  GameMaster?
+}
+
+model Player {
+  userID       String       @id
+  experiences  Experience[]
+  disponiblity TimePeriod[]
+  genres       Genre[]
+  tables       Table[]
+  user         User         @relation(fields: [userID], references: [id])
+}
+
+model Experience {
+  playerID  String    @id
+  startDate DateTime
+  endDate   DateTime?
+  system    System
+  player    Player    @relation(fields: [playerID], references: [userID])
+}
+
+model TimePeriod {
+  playerID String  @id
+  weekday  Weekday
+  start    Int[]
+  end      Int[]
+  player   Player  @relation(fields: [playerID], references: [userID])
+}
+
+model GameMaster {
+  userID  String   @id
+  xp      DateTime
+  systems System[]
+  genres  Genre[]
+  tables  Table[]
+  user    User     @relation(fields: [userID], references: [id])
+}
+
+model Table {
+  tableID        String      @id @default(cuid())
+  playersID      String[]
+  gameMasterID   String
+  players        Player[]
+  gameMaster     GameMaster  @relation(fields: [gameMasterID], references: [userID])
+  system         System
+  genre          Genre[]
+  frequency      Frequency[]
+  description    String
+  vacancies      Int
+  createdAt      DateTime?   @default(now())
+  updatedAt      DateTime?   @updatedAt
+  slug           String      @unique
+  title          String
+  image          String?
+  paid           Boolean
+  price          Float?
+  currency       String?
+  tags           Tag[]
+  additionalInfo String?
+}
+
+model Frequency {
+  tableID String  @id
+  weekday Weekday
+  start   Int[]
+  end     Int[]
+  table   Table   @relation(fields: [tableID], references: [tableID])
+}
+
+enum System {
+  ORDEM_PARANORMAL
+  DND
+  OWN
+}
+
+enum Genre {
+  FANTASY
+  SCI_FI
+  HORROR
+  MYSTERY
+  THRILLER
+  ROMANCE
+  HISTORICAL
+  WESTERN
+  DYSTOPIAN
+  CONTEMPORARY
+  PARANORMAL
+  URBAN
+  YOUNG_ADULT
+  CHILDREN
+  ADULT
+}
+
+enum Weekday {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum Tag {
+  LGBTQIA_PLUS
+  WOMEN_ONLY
+  BLACK_ONLY
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+}

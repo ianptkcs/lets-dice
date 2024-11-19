@@ -1,0 +1,2 @@
+-   Para iniciar a db PostgreSQL, roda `sudo docker run --rm -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust postgres`
+-   Run `npx prisma migrate dev` to track migrations
